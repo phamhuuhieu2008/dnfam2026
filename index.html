@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator — TạoQR.vn</title>
+  <meta name="description" content="Tạo mã QR miễn phí từ đường dẫn hoặc hình ảnh. Tuỳ chọn gắn logo ở giữa mã QR." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- NAVBAR -->
+    <nav class="navbar" id="navbar">
+      <div class="nav-inner">
+        <div class="nav-brand">
+          <div class="brand-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <rect x="2" y="2" width="10" height="10" rx="2" fill="#a78bfa"/>
+              <rect x="16" y="2" width="10" height="10" rx="2" fill="#818cf8"/>
+              <rect x="2" y="16" width="10" height="10" rx="2" fill="#818cf8"/>
+              <rect x="16" y="16" width="4" height="4" rx="1" fill="#a78bfa"/>
+              <rect x="22" y="16" width="4" height="4" rx="1" fill="#a78bfa"/>
+              <rect x="16" y="22" width="4" height="4" rx="1" fill="#a78bfa"/>
+              <rect x="22" y="22" width="4" height="4" rx="1" fill="#a78bfa"/>
+            </svg>
+          </div>
+          <span class="brand-text">TạoQR<span class="brand-dot">.vn</span></span>
+        </div>
+        <div class="nav-links">
+          <a href="#" class="nav-link active" data-page="home" id="nav-home">Tạo QR</a>
+          <a href="#" class="nav-link" data-page="gallery" id="nav-gallery">Bộ sưu tập</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HOME PAGE -->
+    <main id="page-home" class="page active">
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-bg">
+          <div class="hero-orb hero-orb-1"></div>
+          <div class="hero-orb hero-orb-2"></div>
+          <div class="hero-orb hero-orb-3"></div>
+        </div>
+        <div class="hero-content">
+          <div class="hero-badge">✨ Miễn phí &amp; Không giới hạn</div>
+          <h1 class="hero-title">Tạo Mã QR<br /><span class="hero-gradient">Chuyên Nghiệp</span></h1>
+          <p class="hero-sub">Tạo mã QR từ đường dẫn hoặc hình ảnh. Gắn logo tuỳ chỉnh ngay trung tâm.</p>
+        </div>
+      </section>
+
+      <!-- CREATOR CARD -->
+      <section class="creator-section">
+        <div class="creator-card">
+          <!-- LEFT: INPUTS -->
+          <div class="creator-left">
+            <h2 class="creator-title">Cấu hình QR Code</h2>
+
+            <!-- MODE TABS -->
+            <div class="mode-tabs" id="modeTabs">
+              <button class="mode-tab active" id="tab-link" data-mode="link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Đường dẫn (URL)
+              </button>
+              <button class="mode-tab" id="tab-image" data-mode="image">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Hình ảnh
+              </button>
+            </div>
+
+            <!-- LINK INPUT -->
+            <div id="input-link" class="input-panel active">
+              <label class="input-label">Nhập đường dẫn / URL</label>
+              <div class="input-wrap">
+                <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <input type="url" id="urlInput" class="text-input" placeholder="https://example.com" autocomplete="off" />
+              </div>
+            </div>
+
+            <!-- IMAGE INPUT -->
+            <div id="input-image" class="input-panel">
+              <label class="input-label">Tải lên hình ảnh</label>
+              <div class="dropzone" id="dropzone">
+                <input type="file" id="imageFile" accept="image/*" hidden />
+                <div class="dropzone-inner" id="dropzoneInner">
+                  <div class="dropzone-icon">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <p class="dropzone-text">Kéo thả hoặc <span class="dropzone-link" id="dropzoneClick">chọn file</span></p>
+                  <p class="dropzone-hint">JPG, PNG, GIF, WebP (tối đa 10MB)</p>
+                </div>
+                <div class="dropzone-preview hidden" id="dropzonePreview">
+                  <img id="previewImg" src="" alt="Preview" />
+                  <button class="remove-btn" id="removeImage">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- QR NAME -->
+            <div class="field-group">
+              <label class="input-label">Tên mã QR <span class="label-opt">(tuỳ chọn)</span></label>
+              <input type="text" id="qrName" class="text-input" placeholder="Ví dụ: Website công ty, Menu nhà hàng..." />
+            </div>
+
+            <!-- LOGO OPTION -->
+            <div class="logo-section">
+              <div class="logo-toggle-row">
+                <div>
+                  <p class="input-label" style="margin-bottom:2px">Gắn logo vào QR</p>
+                  <p class="logo-hint">Logo sẽ xuất hiện ở trung tâm mã QR</p>
+                </div>
+                <label class="toggle" id="logoToggle">
+                  <input type="checkbox" id="logoEnabled" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="logo-upload hidden" id="logoUploadArea">
+                <div class="dropzone small" id="logoDropzone">
+                  <input type="file" id="logoFile" accept="image/*" hidden />
+                  <div class="dropzone-inner" id="logoDropzoneInner">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p class="dropzone-text">Chọn logo (<span class="dropzone-link" id="logoClick">duyệt file</span>)</p>
+                  </div>
+                  <div class="dropzone-preview hidden" id="logoPreview">
+                    <img id="logoPreviewImg" src="" alt="Logo" />
+                    <button class="remove-btn" id="removeLogo">✕</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLOR -->
+            <div class="color-row">
+              <div class="color-field">
+                <label class="input-label">Màu QR</label>
+                <div class="color-wrap">
+                  <input type="color" id="qrColor" value="#1e1b4b" class="color-picker" />
+                  <span class="color-val" id="qrColorVal">#1e1b4b</span>
+                </div>
+              </div>
+              <div class="color-field">
+                <label class="input-label">Màu nền</label>
+                <div class="color-wrap">
+                  <input type="color" id="bgColor" value="#ffffff" class="color-picker" />
+                  <span class="color-val" id="bgColorVal">#ffffff</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- GENERATE BUTTON -->
+            <button class="btn-generate" id="btnGenerate">
+              <span class="btn-text">Tạo Mã QR</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+
+          <!-- RIGHT: PREVIEW -->
+          <div class="creator-right">
+            <div class="preview-area" id="previewArea">
+              <div class="preview-placeholder" id="previewPlaceholder">
+                <div class="placeholder-icon">
+                  <svg width="80" height="80" viewBox="0 0 28 28" fill="none">
+                    <rect x="2" y="2" width="10" height="10" rx="2" fill="rgba(167,139,250,0.3)"/>
+                    <rect x="16" y="2" width="10" height="10" rx="2" fill="rgba(129,140,248,0.3)"/>
+                    <rect x="2" y="16" width="10" height="10" rx="2" fill="rgba(129,140,248,0.3)"/>
+                    <rect x="16" y="16" width="4" height="4" rx="1" fill="rgba(167,139,250,0.3)"/>
+                    <rect x="22" y="16" width="4" height="4" rx="1" fill="rgba(167,139,250,0.3)"/>
+                    <rect x="16" y="22" width="4" height="4" rx="1" fill="rgba(167,139,250,0.3)"/>
+                    <rect x="22" y="22" width="4" height="4" rx="1" fill="rgba(167,139,250,0.3)"/>
+                  </svg>
+                </div>
+                <p>Mã QR sẽ xuất hiện ở đây</p>
+                <p class="placeholder-hint">Nhập thông tin và nhấn "Tạo Mã QR"</p>
+              </div>
+              <div class="qr-output hidden" id="qrOutput">
+                <div class="qr-canvas-wrap" id="qrCanvasWrap">
+                  <canvas id="finalQR"></canvas>
+                </div>
+                <p class="qr-label" id="qrLabel"></p>
+                <div class="qr-actions">
+                  <button class="btn-dl" id="btnDownload">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Tải PNG
+                  </button>
+                  <button class="btn-save" id="btnSave">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Lưu bộ sưu tập
+                  </button>
+                </div>
+                <p class="scan-tip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  🔗 QR link → quét là vào <strong>thẳng trang đích</strong> (Drive, YouTube...) &nbsp;|&nbsp; 🖼️ QR ảnh → nhấn <strong>Lưu</strong> trước khi quét
+                </p>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section class="features-section">
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg,#a78bfa22,#818cf822)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <h3>Từ Đường Dẫn</h3>
+            <p>Nhập bất kỳ URL nào để tạo mã QR ngay lập tức, không cần đăng ký.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg,#34d39922,#06b6d422)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <h3>Từ Hình Ảnh</h3>
+            <p>Upload ảnh, hệ thống sẽ tạo QR trỏ tới hình ảnh đó để chia sẻ dễ dàng.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg,#f59e0b22,#ef444422)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+            </div>
+            <h3>Gắn Logo</h3>
+            <p>Thêm logo thương hiệu vào trung tâm QR code để tăng độ nhận diện.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background: linear-gradient(135deg,#ec489922,#a78bfa22)">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3>Quản Lý An Toàn</h3>
+            <p>Admin có thể tắt hoặc xóa QR bất cứ lúc nào với bảo mật PIN.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- GALLERY PAGE -->
+    <main id="page-gallery" class="page">
+      <div class="gallery-header">
+        <h2 class="gallery-title">Bộ Sưu Tập QR</h2>
+        <p class="gallery-sub">Tất cả các mã QR bạn đã tạo và lưu lại</p>
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <div class="gallery-empty" id="galleryEmpty">
+          <svg width="64" height="64" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="10" height="10" rx="2" fill="rgba(167,139,250,0.2)"/>
+            <rect x="16" y="2" width="10" height="10" rx="2" fill="rgba(129,140,248,0.2)"/>
+            <rect x="2" y="16" width="10" height="10" rx="2" fill="rgba(129,140,248,0.2)"/>
+          </svg>
+          <p>Chưa có mã QR nào được lưu</p>
+          <button class="btn-create" onclick="showPage('home')">Tạo ngay</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- ADMIN PAGE -->
+    <main id="page-admin" class="page">
+      <div class="admin-header">
+        <div class="admin-badge">🔐 Khu vực quản trị</div>
+        <h2 class="admin-title">Bảng Điều Khiển Admin</h2>
+        <button class="btn-logout" id="btnLogout">Đăng xuất</button>
+      </div>
+      <div class="admin-stats" id="adminStats"></div>
+      <div class="admin-grid" id="adminGrid">
+        <div class="gallery-empty" id="adminEmpty">
+          <svg width="64" height="64" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="2" width="10" height="10" rx="2" fill="rgba(167,139,250,0.2)"/>
+            <rect x="16" y="2" width="10" height="10" rx="2" fill="rgba(129,140,248,0.2)"/>
+            <rect x="2" y="16" width="10" height="10" rx="2" fill="rgba(129,140,248,0.2)"/>
+          </svg>
+          <p>Chưa có mã QR nào trong hệ thống</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- ADMIN LOGIN MODAL -->
+    <div class="modal-overlay hidden" id="adminLoginOverlay">
+      <div class="modal-card" id="adminLoginCard">
+        <div class="modal-icon">🔐</div>
+        <h3 class="modal-title">Đăng nhập Admin</h3>
+        <p class="modal-sub">Nhập mã PIN để truy cập bảng điều khiển</p>
+        <div class="pin-inputs" id="pinInputs">
+          <input type="password" class="pin-digit" maxlength="1" data-index="0" />
+          <input type="password" class="pin-digit" maxlength="1" data-index="1" />
+          <input type="password" class="pin-digit" maxlength="1" data-index="2" />
+          <input type="password" class="pin-digit" maxlength="1" data-index="3" />
+          <input type="password" class="pin-digit" maxlength="1" data-index="4" />
+          <input type="password" class="pin-digit" maxlength="1" data-index="5" />
+        </div>
+        <p class="pin-error hidden" id="pinError">❌ Mã PIN không đúng. Thử lại!</p>
+        <div class="modal-btns">
+          <button class="btn-cancel" id="btnCancelLogin">Huỷ</button>
+          <button class="btn-confirm" id="btnConfirmLogin">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast hidden" id="toast"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

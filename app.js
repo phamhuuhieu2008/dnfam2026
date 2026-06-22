@@ -3,8 +3,8 @@
    ============================================================ */
 
 // ── CONSTANTS ──────────────────────────────────────────────
-const ADMIN_PIN   = '872008';
-const ADMIN_PATH  = 'huuhieu';
+const ADMIN_PIN = '872008';
+const ADMIN_PATH = 'huuhieu';
 const STORAGE_KEY = 'qr_collection_v2';
 
 // Resolve view.html path relative to index.html
@@ -14,13 +14,17 @@ function getViewerURL(params) {
 }
 
 // ── STATE ──────────────────────────────────────────────────
-let currentMode        = 'link';    // 'link' | 'image'
-let uploadedImageData  = null;      // base64 of uploaded content image
-let uploadedLogoData   = null;      // base64 of logo
-let logoEnabled        = false;
-let isAdminLoggedIn    = false;
-let lastGeneratedData  = null;      // { canvas, name, type, data, color, bg, logo }
-let qrCollection       = [];        // array of QR records
+let currentMode = 'link';    // 'link' | 'image'
+let uploadedImageData = null;      // base64 of uploaded content image
+let uploadedLogoData = null;      // base64 of logo
+let logoEnabled = false;
+let isAdminLoggedIn = false;
+let lastGeneratedData = null;      // { canvas, name, type, data, color, bg, logo }
+let qrCollection = [];        // array of QR records
+let qrSize = 256;       // QR code size in pixels
+let logoSize = 22;        // Logo size as % of QR
+let borderEnabled = true;      // Add white border on download
+let borderSize = 20;        // Border size in pixels
 
 // ── INIT ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,13 +104,13 @@ function setupModeTabs() {
 // ── DROPZONE ───────────────────────────────────────────────
 function setupDropzone() {
   // Main image dropzone
-  const dz      = document.getElementById('dropzone');
-  const fileIn  = document.getElementById('imageFile');
-  const inner   = document.getElementById('dropzoneInner');
+  const dz = document.getElementById('dropzone');
+  const fileIn = document.getElementById('imageFile');
+  const inner = document.getElementById('dropzoneInner');
   const preview = document.getElementById('dropzonePreview');
-  const preImg  = document.getElementById('previewImg');
+  const preImg = document.getElementById('previewImg');
   const dzClick = document.getElementById('dropzoneClick');
-  const rmvBtn  = document.getElementById('removeImage');
+  const rmvBtn = document.getElementById('removeImage');
 
   dzClick.addEventListener('click', () => fileIn.click());
   dz.addEventListener('click', e => { if (!e.target.closest('.remove-btn') && !e.target.closest('.dropzone-link')) fileIn.click(); });
@@ -130,13 +134,13 @@ function setupDropzone() {
   });
 
   // Logo dropzone
-  const logoDZ    = document.getElementById('logoDropzone');
-  const logoIn    = document.getElementById('logoFile');
+  const logoDZ = document.getElementById('logoDropzone');
+  const logoIn = document.getElementById('logoFile');
   const logoInner = document.getElementById('logoDropzoneInner');
-  const logoPrev  = document.getElementById('logoPreview');
-  const logoPImg  = document.getElementById('logoPreviewImg');
-  const logoClk   = document.getElementById('logoClick');
-  const logoRmv   = document.getElementById('removeLogo');
+  const logoPrev = document.getElementById('logoPreview');
+  const logoPImg = document.getElementById('logoPreviewImg');
+  const logoClk = document.getElementById('logoClick');
+  const logoRmv = document.getElementById('removeLogo');
 
   logoClk.addEventListener('click', () => logoIn.click());
   logoDZ.addEventListener('click', e => { if (!e.target.closest('.remove-btn') && !e.target.closest('.dropzone-link')) logoIn.click(); });
@@ -179,7 +183,7 @@ function handleImageFile(file, imgEl, innerEl, previewEl, target) {
 
 // ── LOGO TOGGLE ────────────────────────────────────────────
 function setupLogoToggle() {
-  const chk  = document.getElementById('logoEnabled');
+  const chk = document.getElementById('logoEnabled');
   const area = document.getElementById('logoUploadArea');
   chk.addEventListener('change', () => {
     logoEnabled = chk.checked;
@@ -189,10 +193,10 @@ function setupLogoToggle() {
 
 // ── COLOR PICKERS ──────────────────────────────────────────
 function setupColorPickers() {
-  const qrC  = document.getElementById('qrColor');
-  const bgC  = document.getElementById('bgColor');
-  const qrV  = document.getElementById('qrColorVal');
-  const bgV  = document.getElementById('bgColorVal');
+  const qrC = document.getElementById('qrColor');
+  const bgC = document.getElementById('bgColor');
+  const qrV = document.getElementById('qrColorVal');
+  const bgV = document.getElementById('bgColorVal');
 
   qrC.addEventListener('input', () => { qrV.textContent = qrC.value; });
   bgC.addEventListener('input', () => { bgV.textContent = bgC.value; });
@@ -203,6 +207,32 @@ function setupGenerate() {
   document.getElementById('btnGenerate').addEventListener('click', generateQR);
   document.getElementById('btnDownload').addEventListener('click', downloadQR);
   document.getElementById('btnSave').addEventListener('click', saveToCollection);
+
+  // Size controls
+  const qrSizeInput = document.getElementById('qrSize');
+  const logoSizeInput = document.getElementById('logoSize');
+  const borderCheckbox = document.getElementById('borderEnabled');
+  const borderSizeInput = document.getElementById('borderSize');
+
+  qrSizeInput.addEventListener('input', () => {
+    qrSize = parseInt(qrSizeInput.value);
+    document.getElementById('qrSizeVal').textContent = qrSize + 'px';
+  });
+
+  logoSizeInput.addEventListener('input', () => {
+    logoSize = parseInt(logoSizeInput.value);
+    document.getElementById('logoSizeVal').textContent = logoSize + '%';
+  });
+
+  borderCheckbox.addEventListener('change', () => {
+    borderEnabled = borderCheckbox.checked;
+    document.getElementById('borderSettings').style.display = borderEnabled ? 'block' : 'none';
+  });
+
+  borderSizeInput.addEventListener('input', () => {
+    borderSize = parseInt(borderSizeInput.value);
+    document.getElementById('borderSizeVal').textContent = borderSize + 'px';
+  });
 }
 
 async function generateQR() {
@@ -227,10 +257,10 @@ async function generateQR() {
 
     const qrColor = document.getElementById('qrColor').value;
     const bgColor = document.getElementById('bgColor').value;
-    const name    = document.getElementById('qrName').value.trim() || (currentMode === 'link' ? qrData : 'Hình ảnh QR');
+    const name = document.getElementById('qrName').value.trim() || (currentMode === 'link' ? qrData : 'Hình ảnh QR');
 
-    // Render QR
-    const canvas = await renderQRCanvas(qrData, qrColor, bgColor, logoEnabled ? uploadedLogoData : null);
+    // Render QR with custom sizes
+    const canvas = await renderQRCanvas(qrData, qrColor, bgColor, logoEnabled ? uploadedLogoData : null, qrSize, logoSize);
 
     // Show output
     const wrap = document.getElementById('qrCanvasWrap');
@@ -247,15 +277,18 @@ async function generateQR() {
     document.getElementById('qrOutput').classList.remove('hidden');
 
     lastGeneratedData = {
-      rawData:   qrData,    // original URL or placeholder
-      data:      qrData,    // actual QR-encoded string (updated on save)
-      type:      currentMode,
-      name:      name,
-      color:     qrColor,
-      bg:        bgColor,
-      logo:      logoEnabled ? uploadedLogoData : null,
+      rawData: qrData,    // original URL or placeholder
+      data: qrData,    // actual QR-encoded string (updated on save)
+      type: currentMode,
+      name: name,
+      color: qrColor,
+      bg: bgColor,
+      logo: logoEnabled ? uploadedLogoData : null,
       imageData: currentMode === 'image' ? uploadedImageData : null,
-      canvas:    canvas,
+      canvas: canvas,
+      qrSize: qrSize,
+      logoSize: logoSize,
+      borderSize: borderSize,
     };
 
     showToast('✅ Tạo mã QR thành công!');
@@ -265,37 +298,37 @@ async function generateQR() {
   }
 }
 
-function renderQRCanvas(data, fgColor, bgColor, logoDataURL) {
+function renderQRCanvas(data, fgColor, bgColor, logoDataURL, size = 256, lSize = 22) {
   return new Promise(resolve => {
-    const size = 256;
-    const tmp  = document.createElement('div');
+    const qrSize = size;
+    const tmp = document.createElement('div');
     tmp.style.position = 'absolute';
     tmp.style.left = '-9999px';
     document.body.appendChild(tmp);
 
     // eslint-disable-next-line no-undef
     const qr = new QRCode(tmp, {
-      text:            data,
-      width:           size,
-      height:          size,
-      colorDark:       fgColor,
-      colorLight:      bgColor,
-      correctLevel:    QRCode.CorrectLevel.H,
+      text: data,
+      width: qrSize,
+      height: qrSize,
+      colorDark: fgColor,
+      colorLight: bgColor,
+      correctLevel: QRCode.CorrectLevel.H,
     });
 
     setTimeout(() => {
       const qrImg = tmp.querySelector('img') || tmp.querySelector('canvas');
       const canvas = document.createElement('canvas');
-      canvas.width  = size;
-      canvas.height = size;
+      canvas.width = qrSize;
+      canvas.height = qrSize;
       const ctx = canvas.getContext('2d');
 
       const drawBase = () => {
         if (qrImg.tagName === 'IMG') {
           const img = new Image();
           img.onload = () => {
-            ctx.drawImage(img, 0, 0, size, size);
-            if (logoDataURL) overlayLogo(ctx, canvas, logoDataURL, () => { document.body.removeChild(tmp); resolve(canvas); });
+            ctx.drawImage(img, 0, 0, qrSize, qrSize);
+            if (logoDataURL) overlayLogo(ctx, canvas, logoDataURL, lSize, () => { document.body.removeChild(tmp); resolve(canvas); });
             else { document.body.removeChild(tmp); resolve(canvas); }
           };
           img.src = qrImg.src;
@@ -311,8 +344,8 @@ function renderQRCanvas(data, fgColor, bgColor, logoDataURL) {
   });
 }
 
-function overlayLogo(ctx, canvas, logoDataURL, done) {
-  const logoSize = Math.round(canvas.width * 0.22);
+function overlayLogo(ctx, canvas, logoDataURL, logoSizePercent, done) {
+  const logoSize = Math.round(canvas.width * (logoSizePercent / 100));
   const x = (canvas.width - logoSize) / 2;
   const y = (canvas.height - logoSize) / 2;
   const pad = 8;
@@ -359,9 +392,27 @@ function isValidURL(str) {
 function downloadQR() {
   if (!lastGeneratedData) return;
   const canvas = lastGeneratedData.canvas;
-  const a      = document.createElement('a');
-  a.download   = (lastGeneratedData.name || 'qrcode') + '.png';
-  a.href       = canvas.toDataURL('image/png');
+
+  let finalCanvas = canvas;
+
+  // Add white border if enabled
+  if (borderEnabled) {
+    finalCanvas = document.createElement('canvas');
+    finalCanvas.width = canvas.width + (borderSize * 2);
+    finalCanvas.height = canvas.height + (borderSize * 2);
+    const ctx = finalCanvas.getContext('2d');
+
+    // Fill with white background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+    // Draw the QR code in the center
+    ctx.drawImage(canvas, borderSize, borderSize);
+  }
+
+  const a = document.createElement('a');
+  a.download = (lastGeneratedData.name || 'qrcode') + '.png';
+  a.href = finalCanvas.toDataURL('image/png');
   a.click();
   showToast('📥 Đang tải xuống...');
 }
@@ -384,16 +435,19 @@ async function saveToCollection() {
   }
 
   const record = {
-    id:        id,
-    name:      lastGeneratedData.name,
-    type:      lastGeneratedData.type,
-    rawData:   lastGeneratedData.rawData,
-    data:      qrEncodedData,
-    color:     lastGeneratedData.color,
-    bg:        lastGeneratedData.bg,
-    logo:      lastGeneratedData.logo,
+    id: id,
+    name: lastGeneratedData.name,
+    type: lastGeneratedData.type,
+    rawData: lastGeneratedData.rawData,
+    data: qrEncodedData,
+    color: lastGeneratedData.color,
+    bg: lastGeneratedData.bg,
+    logo: lastGeneratedData.logo,
     imageData: lastGeneratedData.imageData,
-    active:    true,
+    qrSize: lastGeneratedData.qrSize,
+    logoSize: lastGeneratedData.logoSize,
+    borderSize: lastGeneratedData.borderSize,
+    active: true,
     createdAt: new Date().toLocaleString('vi-VN'),
   };
 
@@ -402,11 +456,11 @@ async function saveToCollection() {
 
   // For image mode: re-render QR with final view.html URL
   if (lastGeneratedData.type === 'image') {
-    const canvas = await renderQRCanvas(record.data, record.color, record.bg, record.logo);
-    const wrap   = document.getElementById('qrCanvasWrap');
+    const canvas = await renderQRCanvas(record.data, record.color, record.bg, record.logo, record.qrSize, record.logoSize);
+    const wrap = document.getElementById('qrCanvasWrap');
     wrap.innerHTML = '';
     wrap.appendChild(canvas);
-    lastGeneratedData.data   = record.data;
+    lastGeneratedData.data = record.data;
     lastGeneratedData.canvas = canvas;
   }
 
@@ -427,7 +481,7 @@ function persistCollection() {
 
 // ── RENDER GALLERY ─────────────────────────────────────────
 async function renderGallery() {
-  const grid  = document.getElementById('galleryGrid');
+  const grid = document.getElementById('galleryGrid');
   const empty = document.getElementById('galleryEmpty');
   const active = qrCollection.filter(q => q.active);
 
@@ -447,7 +501,7 @@ async function renderGallery() {
 
 // ── RENDER ADMIN ───────────────────────────────────────────
 async function renderAdmin() {
-  const grid  = document.getElementById('adminGrid');
+  const grid = document.getElementById('adminGrid');
   const empty = document.getElementById('adminEmpty');
   const stats = document.getElementById('adminStats');
 
@@ -455,8 +509,8 @@ async function renderAdmin() {
   stats.innerHTML = '';
 
   // Stats
-  const total    = qrCollection.length;
-  const activeC  = qrCollection.filter(q => q.active).length;
+  const total = qrCollection.length;
+  const activeC = qrCollection.filter(q => q.active).length;
   const disabled = total - activeC;
 
   stats.innerHTML = `
@@ -481,9 +535,11 @@ async function buildQRCard(record, isAdmin) {
   card.className = 'qr-card' + (record.active ? '' : ' disabled');
   card.id = 'card-' + record.id;
 
-  // Thumb: render QR onto small canvas
-  const canvas = await renderQRCanvas(record.data, record.color, record.bg, record.logo);
-  canvas.style.width  = '160px';
+  // Thumb: render QR onto small canvas with stored sizes
+  const defaultLogoSize = record.logoSize || 22;
+  const defaultQrSize = record.qrSize || 256;
+  const canvas = await renderQRCanvas(record.data, record.color, record.bg, record.logo, defaultQrSize, defaultLogoSize);
+  canvas.style.width = '160px';
   canvas.style.height = '160px';
 
   const thumb = document.createElement('div');
@@ -527,6 +583,14 @@ async function buildQRCard(record, isAdmin) {
         Xóa
       </button>
     `;
+  } else {
+    // Add delete button for gallery view
+    actionsHTML += `
+      <button class="btn-delete-qr" onclick="deleteFromGallery('${record.id}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Xóa
+      </button>
+    `;
   }
 
   body.innerHTML = `
@@ -550,7 +614,7 @@ async function buildQRCard(record, isAdmin) {
 }
 
 // ── ADMIN ACTIONS ──────────────────────────────────────────
-window.adminToggleQR = function(id) {
+window.adminToggleQR = function (id) {
   const rec = qrCollection.find(q => q.id === id);
   if (!rec) return;
   rec.active = !rec.active;
@@ -559,7 +623,7 @@ window.adminToggleQR = function(id) {
   showToast(rec.active ? '✅ Đã bật mã QR' : '⏸ Đã tắt mã QR');
 };
 
-window.adminDeleteQR = function(id) {
+window.adminDeleteQR = function (id) {
   if (!confirm('Bạn có chắc muốn xóa mã QR này không? Hành động này không thể hoàn tác.')) return;
   qrCollection = qrCollection.filter(q => q.id !== id);
   persistCollection();
@@ -567,10 +631,38 @@ window.adminDeleteQR = function(id) {
   showToast('🗑️ Đã xóa mã QR');
 };
 
-window.downloadCard = async function(id) {
+window.deleteFromGallery = function (id) {
+  if (!confirm('Bạn có chắc muốn xóa mã QR này khỏi bộ sưu tập không?')) return;
+  qrCollection = qrCollection.filter(q => q.id !== id);
+  persistCollection();
+  renderGallery();
+  showToast('🗑️ Đã xóa khỏi bộ sưu tập');
+};
+
+window.downloadCard = async function (id) {
   const rec = qrCollection.find(q => q.id === id);
   if (!rec) return;
-  const canvas = await renderQRCanvas(rec.data, rec.color, rec.bg, rec.logo);
+
+  const defaultLogoSize = rec.logoSize || 22;
+  const defaultQrSize = rec.qrSize || 256;
+  const defaultBorderSize = rec.borderSize || 20;
+
+  let canvas = await renderQRCanvas(rec.data, rec.color, rec.bg, rec.logo, defaultQrSize, defaultLogoSize);
+
+  // Add white border if borderSize > 0
+  if (defaultBorderSize > 0) {
+    const bordered = document.createElement('canvas');
+    bordered.width = canvas.width + (defaultBorderSize * 2);
+    bordered.height = canvas.height + (defaultBorderSize * 2);
+    const ctx = bordered.getContext('2d');
+
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, bordered.width, bordered.height);
+    ctx.drawImage(canvas, defaultBorderSize, defaultBorderSize);
+
+    canvas = bordered;
+  }
+
   const a = document.createElement('a');
   a.download = (rec.name || 'qrcode') + '.png';
   a.href = canvas.toDataURL('image/png');

@@ -25,6 +25,7 @@ let qrSize = 256;       // QR code size in pixels
 let logoSize = 22;        // Logo size as % of QR
 let borderEnabled = true;      // Add white border on download
 let borderSize = 20;        // Border size in pixels
+let artworkTitle = '';       // Title displayed below QR
 
 // ── INIT ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
@@ -273,6 +274,13 @@ async function generateQR() {
     qrLabel.textContent = labelText;
     qrLabel.title = '';
 
+    // Artwork title display
+    const titleVal = document.getElementById('artworkTitle').value.trim();
+    artworkTitle = titleVal;
+    const titleDisplay = document.getElementById('artworkTitleDisplay');
+    titleDisplay.textContent = titleVal;
+    titleDisplay.style.display = titleVal ? 'block' : 'none';
+
     document.getElementById('previewPlaceholder').classList.add('hidden');
     document.getElementById('qrOutput').classList.remove('hidden');
 
@@ -289,6 +297,7 @@ async function generateQR() {
       qrSize: qrSize,
       logoSize: logoSize,
       borderSize: borderSize,
+      artworkTitle: artworkTitle,
     };
 
     showToast('✅ Tạo mã QR thành công!');
@@ -388,27 +397,57 @@ function isValidURL(str) {
   try { new URL(str); return true; } catch (_) { return false; }
 }
 
+// Helper to add border and artwork title to a canvas
+function addBorderAndTitleToCanvas(canvas, title, borderEnabledOpt, borderSizeOpt) {
+  const bSize = borderEnabledOpt ? borderSizeOpt : 0;
+  const hasTitle = title && title.trim().length > 0;
+  
+  if (bSize === 0 && !hasTitle) {
+    return canvas;
+  }
+
+  const finalCanvas = document.createElement('canvas');
+  
+  // Spacing configurations
+  const textGap = hasTitle ? (Math.round(canvas.width * 0.07) + 6) : 0;     // Gap from QR to text (7% of QR width + 6px)
+  const fontSize = hasTitle ? Math.round(canvas.width * 0.06) : 0;          // Font size proportional to QR size (6% of QR width)
+  const bottomPadding = hasTitle ? 6 : bSize;                              // 6px bottom padding if there is text, else standard border size
+  
+  // Height = QR height + top border + gap + text height + bottom padding
+  finalCanvas.width = canvas.width + (bSize * 2);
+  finalCanvas.height = canvas.height + bSize + textGap + fontSize + bottomPadding;
+  
+  const ctx = finalCanvas.getContext('2d');
+
+  // Fill white background
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+  // Draw QR code centered horizontally
+  ctx.drawImage(canvas, bSize, bSize);
+
+  // Draw artwork title centered under the QR code
+  if (hasTitle) {
+    ctx.font = `bold ${fontSize}px Inter, Arial, sans-serif`;
+    ctx.fillStyle = '#1e1b4b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    
+    // Draw text with spacing (bSize + canvas.height + textGap)
+    const textY = canvas.height + bSize + textGap;
+    ctx.fillText(title, finalCanvas.width / 2, textY, finalCanvas.width - bSize * 2);
+  }
+
+  return finalCanvas;
+}
+
 // ── DOWNLOAD ───────────────────────────────────────────────
 function downloadQR() {
   if (!lastGeneratedData) return;
   const canvas = lastGeneratedData.canvas;
+  const title = lastGeneratedData.artworkTitle || '';
 
-  let finalCanvas = canvas;
-
-  // Add white border if enabled
-  if (borderEnabled) {
-    finalCanvas = document.createElement('canvas');
-    finalCanvas.width = canvas.width + (borderSize * 2);
-    finalCanvas.height = canvas.height + (borderSize * 2);
-    const ctx = finalCanvas.getContext('2d');
-
-    // Fill with white background
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-    // Draw the QR code in the center
-    ctx.drawImage(canvas, borderSize, borderSize);
-  }
+  const finalCanvas = addBorderAndTitleToCanvas(canvas, title, borderEnabled, borderSize);
 
   const a = document.createElement('a');
   a.download = (lastGeneratedData.name || 'qrcode') + '.png';
@@ -447,6 +486,7 @@ async function saveToCollection() {
     qrSize: lastGeneratedData.qrSize,
     logoSize: lastGeneratedData.logoSize,
     borderSize: lastGeneratedData.borderSize,
+    artworkTitle: lastGeneratedData.artworkTitle || '',
     active: true,
     createdAt: new Date().toLocaleString('vi-VN'),
   };
@@ -646,26 +686,16 @@ window.downloadCard = async function (id) {
   const defaultLogoSize = rec.logoSize || 22;
   const defaultQrSize = rec.qrSize || 256;
   const defaultBorderSize = rec.borderSize || 20;
+  const title = rec.artworkTitle || '';
 
-  let canvas = await renderQRCanvas(rec.data, rec.color, rec.bg, rec.logo, defaultQrSize, defaultLogoSize);
-
-  // Add white border if borderSize > 0
-  if (defaultBorderSize > 0) {
-    const bordered = document.createElement('canvas');
-    bordered.width = canvas.width + (defaultBorderSize * 2);
-    bordered.height = canvas.height + (defaultBorderSize * 2);
-    const ctx = bordered.getContext('2d');
-
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, bordered.width, bordered.height);
-    ctx.drawImage(canvas, defaultBorderSize, defaultBorderSize);
-
-    canvas = bordered;
-  }
+  const qrCanvas = await renderQRCanvas(rec.data, rec.color, rec.bg, rec.logo, defaultQrSize, defaultLogoSize);
+  const borderOpt = defaultBorderSize > 0;
+  
+  const finalCanvas = addBorderAndTitleToCanvas(qrCanvas, title, borderOpt, defaultBorderSize);
 
   const a = document.createElement('a');
   a.download = (rec.name || 'qrcode') + '.png';
-  a.href = canvas.toDataURL('image/png');
+  a.href = finalCanvas.toDataURL('image/png');
   a.click();
   showToast('📥 Đang tải xuống...');
 };
